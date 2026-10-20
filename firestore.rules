@@ -1,0 +1,188 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net - Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper Functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isBusinessOwner(bizId) {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/businesses/$(bizId)) &&
+        get(/databases/$(database)/documents/businesses/$(bizId)).data.ownerId == request.auth.uid;
+    }
+
+    function isBusinessMember(bizId) {
+      return isBusinessOwner(bizId) || (
+        isSignedIn() &&
+        exists(/databases/$(database)/documents/businesses/$(bizId)/members/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/businesses/$(bizId)/members/$(request.auth.uid)).data.status == 'active'
+      );
+    }
+
+    function getMemberRole(bizId) {
+      return get(/databases/$(database)/documents/businesses/$(bizId)/members/$(request.auth.uid)).data.role;
+    }
+
+    function hasAnyRole(bizId, roles) {
+      return isBusinessOwner(bizId) || (
+        isBusinessMember(bizId) &&
+        (getMemberRole(bizId) in roles)
+      );
+    }
+
+    // User Profile Rules
+    match /users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId);
+      allow create, update: if isSignedIn() && request.auth.uid == userId;
+      allow delete: if false;
+    }
+
+    // Business Tenant Root Rules
+    match /businesses/{businessId} {
+      allow get: if isSignedIn() && (
+        resource.data.ownerId == request.auth.uid ||
+        isBusinessMember(businessId)
+      );
+      // List query enforced by matching tenant ownerId
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isSignedIn() &&
+        isValidId(businessId) &&
+        incoming().ownerId == request.auth.uid &&
+        incoming().name is string &&
+        incoming().name.size() > 0 && incoming().name.size() <= 256;
+      allow update: if isSignedIn() &&
+        (resource.data.ownerId == request.auth.uid || hasAnyRole(businessId, ['owner', 'admin'])) &&
+        incoming().ownerId == existing().ownerId;
+      allow delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+
+      // Subcollections within the Business Tenant:
+
+      // 1. Members / Staff
+      match /members/{memberId} {
+        allow read: if isBusinessMember(businessId);
+        allow create, update: if isSignedIn() &&
+          isValidId(memberId) &&
+          (isBusinessOwner(businessId) || hasAnyRole(businessId, ['owner', 'admin']));
+        allow delete: if isSignedIn() &&
+          (isBusinessOwner(businessId) || hasAnyRole(businessId, ['owner', 'admin'])) &&
+          memberId != request.auth.uid;
+      }
+
+      // 2. Products & Services
+      match /products/{productId} {
+        allow read: if isBusinessMember(businessId);
+        allow create, update: if isSignedIn() &&
+          isValidId(productId) &&
+          hasAnyRole(businessId, ['owner', 'admin', 'manager', 'inventory']);
+        allow delete: if isSignedIn() &&
+          hasAnyRole(businessId, ['owner', 'admin', 'manager']);
+      }
+
+      // 3. Customers
+      match /customers/{customerId} {
+        allow read: if isBusinessMember(businessId);
+        allow create, update: if isSignedIn() &&
+          isValidId(customerId) &&
+          isBusinessMember(businessId);
+        allow delete: if isSignedIn() &&
+          hasAnyRole(businessId, ['owner', 'admin', 'manager']);
+      }
+
+      // 4. Suppliers
+      match /suppliers/{supplierId} {
+        allow read: if isBusinessMember(businessId);
+        allow create, update: if isSignedIn() &&
+          isValidId(supplierId) &&
+          hasAnyRole(businessId, ['owner', 'admin', 'manager', 'inventory']);
+        allow delete: if isSignedIn() &&
+          hasAnyRole(businessId, ['owner', 'admin', 'manager']);
+      }
+
+      // 5. Invoices / Sales
+      match /invoices/{invoiceId} {
+        allow read: if isBusinessMember(businessId);
+        allow create: if isSignedIn() &&
+          isValidId(invoiceId) &&
+          hasAnyRole(businessId, ['owner', 'admin', 'manager', 'accountant', 'cashier']) &&
+          incoming().total is number;
+        allow update: if isSignedIn() &&
+          isValidId(invoiceId) &&
+          hasAnyRole(businessId, ['owner', 'admin', 'manager', 'accountant', 'cashier']);
+        allow delete: if isSignedIn() &&
+          hasAnyRole(businessId, ['owner', 'admin']);
+      }
+
+      // 6. Payments
+      match /payments/{paymentId} {
+        allow read: if isBusinessMember(businessId);
+        allow create: if isSignedIn() &&
+          isValidId(paymentId) &&
+          hasAnyRole(businessId, ['owner', 'admin', 'manager', 'accountant', 'cashier']) &&
+          incoming().amount is number;
+        allow update: if isSignedIn() &&
+          hasAnyRole(businessId, ['owner', 'admin', 'manager', 'accountant']);
+        allow delete: if isSignedIn() &&
+          hasAnyRole(businessId, ['owner', 'admin']);
+      }
+
+      // 7. Purchases
+      match /purchases/{purchaseId} {
+        allow read: if isBusinessMember(businessId);
+        allow create, update: if isSignedIn() &&
+          isValidId(purchaseId) &&
+          hasAnyRole(businessId, ['owner', 'admin', 'manager', 'inventory']);
+        allow delete: if isSignedIn() &&
+          hasAnyRole(businessId, ['owner', 'admin']);
+      }
+
+      // 8. Inventory Movements (Append-only Audit Trail)
+      match /inventoryMovements/{movementId} {
+        allow read: if isBusinessMember(businessId);
+        allow create: if isSignedIn() &&
+          isValidId(movementId) &&
+          hasAnyRole(businessId, ['owner', 'admin', 'manager', 'inventory', 'cashier']);
+        allow update, delete: if false; // Immutable ledger
+      }
+
+      // 9. Expenses
+      match /expenses/{expenseId} {
+        allow read: if isBusinessMember(businessId);
+        allow create, update: if isSignedIn() &&
+          isValidId(expenseId) &&
+          hasAnyRole(businessId, ['owner', 'admin', 'manager', 'accountant']);
+        allow delete: if isSignedIn() &&
+          hasAnyRole(businessId, ['owner', 'admin', 'manager']);
+      }
+
+      // 10. Audit Logs (Immutable)
+      match /auditLogs/{logId} {
+        allow read: if isBusinessMember(businessId) &&
+          hasAnyRole(businessId, ['owner', 'admin', 'manager']);
+        allow create: if isSignedIn() &&
+          isValidId(logId) &&
+          isBusinessMember(businessId);
+        allow update, delete: if false; // Immutable log
+      }
+    }
+  }
+}

@@ -1,0 +1,305 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile document",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 256 },
+        "displayName": { "type": "string", "maxLength": 256 },
+        "photoURL": { "type": "string", "maxLength": 2048 },
+        "defaultBusinessId": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Business": {
+      "title": "Business",
+      "description": "Tenant business organization",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 256 },
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "businessType": { "type": "string", "maxLength": 100 },
+        "currency": { "type": "string", "maxLength": 10 },
+        "taxId": { "type": "string", "maxLength": 100 },
+        "phone": { "type": "string", "maxLength": 50 },
+        "email": { "type": "string", "maxLength": 256 },
+        "address": { "type": "string", "maxLength": 500 },
+        "accent": { "type": "string", "maxLength": 30 },
+        "lhMode": { "type": "string", "enum": ["builtin", "custom", "plain"] },
+        "lhImg": { "type": "string", "maxLength": 500000 },
+        "mt": { "type": "number" },
+        "mb": { "type": "number" },
+        "ml": { "type": "number" },
+        "mr": { "type": "number" },
+        "prefix": { "type": "string", "maxLength": 20 },
+        "vat": { "type": "number" },
+        "note": { "type": "string", "maxLength": 1000 },
+        "staff": { "type": "array" },
+        "methods": { "type": "array" },
+        "enabledModules": { "type": "array" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["name", "ownerId"]
+    },
+    "BusinessMember": {
+      "title": "BusinessMember",
+      "description": "Staff member or collaborator in a tenant business",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "businessId": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 256 },
+        "name": { "type": "string", "maxLength": 256 },
+        "role": { "type": "string", "enum": ["owner", "admin", "manager", "accountant", "cashier", "inventory", "readonly"] },
+        "status": { "type": "string", "enum": ["active", "invited", "disabled"] },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "businessId", "role"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Product or service in inventory",
+      "type": "object",
+      "properties": {
+        "businessId": { "type": "string", "maxLength": 128 },
+        "code": { "type": "string", "maxLength": 100 },
+        "name": { "type": "string", "maxLength": 256 },
+        "category": { "type": "string", "maxLength": 100 },
+        "unit": { "type": "string", "maxLength": 50 },
+        "price": { "type": "number" },
+        "cost": { "type": "number" },
+        "stock": { "type": "number" },
+        "minStock": { "type": "number" },
+        "trackStock": { "type": "boolean" },
+        "isService": { "type": "boolean" },
+        "image": { "type": "string", "maxLength": 500000 },
+        "status": { "type": "string", "enum": ["active", "archived"] },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["businessId", "code", "name", "price"]
+    },
+    "Customer": {
+      "title": "Customer",
+      "description": "Customer entity in a tenant business",
+      "type": "object",
+      "properties": {
+        "businessId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 256 },
+        "company": { "type": "string", "maxLength": 256 },
+        "phone": { "type": "string", "maxLength": 50 },
+        "email": { "type": "string", "maxLength": 256 },
+        "address": { "type": "string", "maxLength": 500 },
+        "totalPurchases": { "type": "number" },
+        "totalPaid": { "type": "number" },
+        "balanceDue": { "type": "number" },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["businessId", "name"]
+    },
+    "Supplier": {
+      "title": "Supplier",
+      "description": "Supplier entity in a tenant business",
+      "type": "object",
+      "properties": {
+        "businessId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 256 },
+        "company": { "type": "string", "maxLength": 256 },
+        "phone": { "type": "string", "maxLength": 50 },
+        "email": { "type": "string", "maxLength": 256 },
+        "address": { "type": "string", "maxLength": 500 },
+        "totalPurchased": { "type": "number" },
+        "totalPaid": { "type": "number" },
+        "balanceDue": { "type": "number" },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["businessId", "name"]
+    },
+    "Invoice": {
+      "title": "Invoice",
+      "description": "Sales invoice transaction",
+      "type": "object",
+      "properties": {
+        "businessId": { "type": "string", "maxLength": 128 },
+        "no": { "type": "string", "maxLength": 100 },
+        "date": { "type": "string", "maxLength": 20 },
+        "customerId": { "type": "string", "maxLength": 128 },
+        "customer": { "type": "string", "maxLength": 256 },
+        "company": { "type": "string", "maxLength": 256 },
+        "phone": { "type": "string", "maxLength": 50 },
+        "addr": { "type": "string", "maxLength": 500 },
+        "by": { "type": "string", "maxLength": 100 },
+        "items": { "type": "array" },
+        "subtotal": { "type": "number" },
+        "discount": { "type": "number" },
+        "vatRate": { "type": "number" },
+        "vatAmount": { "type": "number" },
+        "delivery": { "type": "number" },
+        "total": { "type": "number" },
+        "paid": { "type": "number" },
+        "due": { "type": "number" },
+        "st": { "type": "string", "enum": ["paid", "partial", "unpaid", "voided"] },
+        "note": { "type": "string", "maxLength": 1000 },
+        "payments": { "type": "array" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["businessId", "no", "total"]
+    },
+    "Payment": {
+      "title": "Payment",
+      "description": "Payment transaction record",
+      "type": "object",
+      "properties": {
+        "businessId": { "type": "string", "maxLength": 128 },
+        "invoiceId": { "type": "string", "maxLength": 128 },
+        "invoiceNo": { "type": "string", "maxLength": 100 },
+        "customerId": { "type": "string", "maxLength": 128 },
+        "customerName": { "type": "string", "maxLength": 256 },
+        "amount": { "type": "number" },
+        "method": { "type": "string", "maxLength": 50 },
+        "date": { "type": "string", "maxLength": 20 },
+        "by": { "type": "string", "maxLength": 100 },
+        "ref": { "type": "string", "maxLength": 100 },
+        "notes": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["businessId", "amount", "method", "date"]
+    },
+    "Purchase": {
+      "title": "Purchase",
+      "description": "Supplier purchase record",
+      "type": "object",
+      "properties": {
+        "businessId": { "type": "string", "maxLength": 128 },
+        "purchaseNo": { "type": "string", "maxLength": 100 },
+        "date": { "type": "string", "maxLength": 20 },
+        "supplierId": { "type": "string", "maxLength": 128 },
+        "supplierName": { "type": "string", "maxLength": 256 },
+        "items": { "type": "array" },
+        "total": { "type": "number" },
+        "paid": { "type": "number" },
+        "due": { "type": "number" },
+        "status": { "type": "string", "enum": ["received", "ordered", "cancelled"] },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["businessId", "purchaseNo", "total"]
+    },
+    "InventoryMovement": {
+      "title": "InventoryMovement",
+      "description": "Auditable stock movement record",
+      "type": "object",
+      "properties": {
+        "businessId": { "type": "string", "maxLength": 128 },
+        "productId": { "type": "string", "maxLength": 128 },
+        "productCode": { "type": "string", "maxLength": 100 },
+        "productName": { "type": "string", "maxLength": 256 },
+        "type": { "type": "string", "enum": ["sale", "void_return", "purchase", "adjustment_in", "adjustment_out", "damage", "initial"] },
+        "quantity": { "type": "number" },
+        "previousStock": { "type": "number" },
+        "newStock": { "type": "number" },
+        "reference": { "type": "string", "maxLength": 100 },
+        "reason": { "type": "string", "maxLength": 256 },
+        "performedBy": { "type": "string", "maxLength": 100 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["businessId", "productId", "type", "quantity"]
+    },
+    "Expense": {
+      "title": "Expense",
+      "description": "Business expense item",
+      "type": "object",
+      "properties": {
+        "businessId": { "type": "string", "maxLength": 128 },
+        "category": { "type": "string", "maxLength": 100 },
+        "description": { "type": "string", "maxLength": 500 },
+        "amount": { "type": "number" },
+        "date": { "type": "string", "maxLength": 20 },
+        "method": { "type": "string", "maxLength": 50 },
+        "payee": { "type": "string", "maxLength": 256 },
+        "notes": { "type": "string", "maxLength": 500 },
+        "createdByName": { "type": "string", "maxLength": 100 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["businessId", "category", "amount", "date"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Audit log entry for sensitive business actions",
+      "type": "object",
+      "properties": {
+        "businessId": { "type": "string", "maxLength": 128 },
+        "action": { "type": "string", "maxLength": 100 },
+        "entity": { "type": "string", "maxLength": 100 },
+        "entityId": { "type": "string", "maxLength": 128 },
+        "details": { "type": "string", "maxLength": 1000 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "userName": { "type": "string", "maxLength": 100 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["businessId", "action", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profiles"
+    },
+    "/businesses/{businessId}": {
+      "schema": { "$ref": "#/entities/Business" },
+      "description": "Tenant businesses"
+    },
+    "/businesses/{businessId}/members/{memberId}": {
+      "schema": { "$ref": "#/entities/BusinessMember" },
+      "description": "Members and employees of a tenant business"
+    },
+    "/businesses/{businessId}/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Products and services catalogue for a business"
+    },
+    "/businesses/{businessId}/customers/{customerId}": {
+      "schema": { "$ref": "#/entities/Customer" },
+      "description": "Customers of a business"
+    },
+    "/businesses/{businessId}/suppliers/{supplierId}": {
+      "schema": { "$ref": "#/entities/Supplier" },
+      "description": "Suppliers of a business"
+    },
+    "/businesses/{businessId}/invoices/{invoiceId}": {
+      "schema": { "$ref": "#/entities/Invoice" },
+      "description": "Sales invoices of a business"
+    },
+    "/businesses/{businessId}/payments/{paymentId}": {
+      "schema": { "$ref": "#/entities/Payment" },
+      "description": "Payment records of a business"
+    },
+    "/businesses/{businessId}/purchases/{purchaseId}": {
+      "schema": { "$ref": "#/entities/Purchase" },
+      "description": "Purchase records of a business"
+    },
+    "/businesses/{businessId}/inventoryMovements/{movementId}": {
+      "schema": { "$ref": "#/entities/InventoryMovement" },
+      "description": "Inventory movement history of a business"
+    },
+    "/businesses/{businessId}/expenses/{expenseId}": {
+      "schema": { "$ref": "#/entities/Expense" },
+      "description": "Expenses recorded for a business"
+    },
+    "/businesses/{businessId}/auditLogs/{logId}": {
+      "schema": { "$ref": "#/entities/AuditLog" },
+      "description": "Audit trail for sensitive business operations"
+    }
+  }
+}

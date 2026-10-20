@@ -1,0 +1,8 @@
+{
+  "name": "Swadoy POS Pro - Multi-Tenant Business Management",
+  "description": "Professional full-stack multi-tenant business management and Point of Sale platform with persistent cloud storage, inventory tracking, invoicing, and reporting.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
